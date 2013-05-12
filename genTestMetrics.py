@@ -11,13 +11,13 @@ import fileio
 import templateManager
 import cv2
 reload(fileio)
-
+reload(metrics)
 def main():
 	###################### WORKING DIRECTORY ########################
 	baseDir = '/home/nick/whale/'
 
 	###################### SET OUTPUT FILE NAME HERE ########################
-	testOutFile = baseDir+'workspace/testMetrics.csv'
+	testOutFile = baseDir+'workspace/testMetricsBase.csv'
 
 	############################## PARAMETERS ###############################
 	dataDir = baseDir+'data2/'			   # Data directory
@@ -51,9 +51,9 @@ def main():
 	for i in range(test.nTest):
 		P, freqs, bins = test.TestSample(i,params=params)
 		out = metrics.computeMetrics(P, tmpl, bins, maxTime)
-		#out += metrics.highFreqTemplate(P, bar_)
-		#out += metrics.highFreqTemplate(P, bar1_)
-		#out += metrics.highFreqTemplate(P, bar2_)
+		out += metrics.highFreqTemplate(P, bar_)
+		out += metrics.highFreqTemplate(P, bar1_)
+		out += metrics.highFreqTemplate(P, bar2_)
 		hL.append(out)			
 	hL = np.array(hL)
 

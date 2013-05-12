@@ -27,22 +27,22 @@ def buildHeader(tmpl,maxT=60):
 			hdr_.append(p_+'H_%07d'%tmpl.info[i]['file'])
 
 	# Add time metrics
-	#for i in range(maxT):
-	#	hdr_ += ['centTime_%04d'%i]
-	#for i in range(maxT):
-	#	hdr_ += ['bwTime_%04d'%i]
-	#for i in range(maxT):
-	#	hdr_ += ['skewTime_%04d'%i]
-	#for i in range(maxT):
-	#	hdr_ += ['tvTime_%04d'%i]
+	for i in range(maxT):
+		hdr_ += ['centTime_%04d'%i]
+	for i in range(maxT):
+		hdr_ += ['bwTime_%04d'%i]
+	for i in range(maxT):
+		hdr_ += ['skewTime_%04d'%i]
+	for i in range(maxT):
+		hdr_ += ['tvTime_%04d'%i]
 
 	# Add time metrics
-	#for i in range(50):
-	#	hdr_ += ['centOops_%04d'%i]
+	for i in range(50):
+		hdr_ += ['centOops_%04d'%i]
 
 	# Add high frequency metrics
-	#hdr_ += ['CentStd','AvgBwd','hfCent','hfBwd']
-	#hdr_ += ['hfMax','hfMax2','hfMax3']
+	hdr_ += ['CentStd','AvgBwd','hfCent','hfBwd']
+	hdr_ += ['hfMax','hfMax2','hfMax3']
 	return ','.join(hdr_)
 
 
@@ -64,9 +64,9 @@ def computeMetrics(P, tmpl, bins, maxT):
 	W = slidingWindowH(P,inner=3,outer=32,maxM=60)
 	out = templateMetrics(Q, tmpl)	
 	out += templateMetrics(W, tmpl)	
-	#out += timeMetrics(P,bins,maxM=maxT)
-	#out += oopsMetrics(P,bins)
-	#out += highFreqMetrics(P,bins)
+	out += timeMetrics(P,bins,maxM=maxT)
+	out += oopsMetrics(P,bins)
+	out += highFreqMetrics(P,bins)
 	return out
 
 def matchTemplate(P, template):
@@ -203,10 +203,10 @@ def timeMetrics(P, b,maxM=50):
 
 	"""
 	m, n = P.shape
-	cf_ = [np.sum(P[i,:]*b)/np.sum(P[i,:]) for i in range(maxM)]
-	bw_ = [np.sum(P[i,:]*(b - cf_[i])*(b - cf_[i]))/np.sum(P[i,:]) for i in range(maxM)]
-	sk_ = [skew(P[i,:]) for i in range(maxM)]
-	tv_ = [np.sum(np.abs(P[i,1:] - P[i,:-1])) for i in range(maxM)]
+	cf_ = [np.sum(P[i,:b.size]*b)/np.sum(P[i,:b.size]) for i in range(maxM)]
+	bw_ = [np.sum(P[i,:b.size]*(b - cf_[i])*(b - cf_[i]))/np.sum(P[i,:b.size]) for i in range(maxM)]
+	sk_ = [skew(P[i,:b.size]) for i in range(maxM)]
+	tv_ = [np.sum(np.abs(P[i,1:b.size] - P[i,:b.size-1])) for i in range(maxM)]
 	return cf_ + bw_ + sk_ + tv_
 
 def oopsMetrics(P, b,maxM=50):
@@ -224,7 +224,14 @@ def oopsMetrics(P, b,maxM=50):
 		Returns:
 			A list containing the statistics
 	"""
-	cf_ = [np.sum(P[i,:]*b)/np.sum(P[:,i]) for i in range(maxM)]
+	cf_ = []
+	for i in xrange(maxM):
+		d = np.sum(P[:,i])
+		if d > 0:
+			cf_.append(np.sum(P[i,:b.size]*b)/d)
+		else:
+			cf_.append(0.)
+	#cf_ = [np.sum(P[i,:b.size]*b)/np.sum(P[:,i]) for i in range(maxM)]
 	return cf_ 
 		
 def highFreqTemplate(P, tmpl):
@@ -268,16 +275,17 @@ def highFreqMetrics(P, bins):
 	"""
 	Q = slidingWindowH(P,inner=7,maxM=50,norm=True)[25:,:]	
 	m, n = Q.shape
+	n = bins.size
 	cf_ = np.empty(m)
 	bw_ = np.empty(m)
 	for i in range(m):
-		mQ = Q[i,:]
+		mQ = Q[i,:n]
 		min_, max_ = mQ.min(), mQ.max()
 		mQ = (mQ - min_)/(max_ - min_)
 		cf_[i] = np.sum(mQ*bins)/np.sum(mQ)
 		bw_[i] = np.sqrt(np.sum(mQ*(bins-cf_[i])*(bins-cf_[i]))/np.sum(mQ))
 
-	mQ = np.sum(Q[14:,:],0)
+	mQ = np.sum(Q[14:,:n],0)
 	min_, max_ = mQ.min(), mQ.max()
 	mQ = (mQ - min_)/(max_ - min_)
 	cfM_ = np.sum(mQ*bins)/np.sum(mQ)
