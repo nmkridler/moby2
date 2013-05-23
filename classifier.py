@@ -127,7 +127,7 @@ class Classify(object):
 
 		"""
 		tf_ = pd.read_csv(testFile)
-
+		
 		if orderFile is not None:
 			tf_['proba'] = np.loadtxt(orderFile,delimiter=',')
 		

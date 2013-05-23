@@ -31,18 +31,18 @@ def buildHeader(tmpl,maxT=60):
 		hdr_ += ['centTime_%04d'%i]
 	for i in range(maxT):
 		hdr_ += ['bwTime_%04d'%i]
-	for i in range(maxT):
-		hdr_ += ['skewTime_%04d'%i]
-	for i in range(maxT):
-		hdr_ += ['tvTime_%04d'%i]
+	#for i in range(maxT):
+	#	hdr_ += ['skewTime_%04d'%i]
+	#for i in range(maxT):
+	#	hdr_ += ['tvTime_%04d'%i]
 
 	# Add time metrics
-	for i in range(50):
-		hdr_ += ['centOops_%04d'%i]
+	#for i in range(50):
+	#	hdr_ += ['centOops_%04d'%i]
 
 	# Add high frequency metrics
-	hdr_ += ['CentStd','AvgBwd','hfCent','hfBwd']
-	hdr_ += ['hfMax','hfMax2','hfMax3']
+	#hdr_ += ['CentStd','AvgBwd','hfCent','hfBwd']
+	#hdr_ += ['hfMax','hfMax2','hfMax3']
 	return ','.join(hdr_)
 
 
@@ -60,13 +60,13 @@ def computeMetrics(P, tmpl, bins, maxT):
 		Returns:
 			List of metrics
 	"""
-	Q = slidingWindowV(P,inner=3,maxM=40)
-	W = slidingWindowH(P,inner=3,outer=32,maxM=60)
+	Q = slidingWindowV(P,inner=3,maxM=40,maxT=bins.size)
+	W = slidingWindowH(P,inner=3,outer=32,maxM=60,maxT=bins.size)
 	out = templateMetrics(Q, tmpl)	
 	out += templateMetrics(W, tmpl)	
 	out += timeMetrics(P,bins,maxM=maxT)
-	out += oopsMetrics(P,bins)
-	out += highFreqMetrics(P,bins)
+	#out += oopsMetrics(P,bins)
+	#out += highFreqMetrics(P,bins)
 	return out
 
 def matchTemplate(P, template):
@@ -119,7 +119,7 @@ def slidingWindow(P,inX=3,outX=32,inY=3,outY=64,maxM=50,norm=True):
 	Q = Q - (convolve2d(Q,wOuter,'same') - convolve2d(Q,wInner,'same'))/(wOuter.size - wInner.size)
 	return Q[:maxM,:]
 
-def slidingWindowV(P,inner=3,outer=64,maxM = 50,norm=True):
+def slidingWindowV(P,inner=3,outer=64,maxM=50,minM=7,maxT=59,norm=True):
 	""" Enhance the constrast vertically (along frequency dimension)
 
 		Cut off extreme values and demean the image
@@ -138,21 +138,20 @@ def slidingWindowV(P,inner=3,outer=64,maxM = 50,norm=True):
 	"""
 	Q = P.copy()
 	m, n = Q.shape
-	if outer > m:
-		outer = m
 		
 	if norm:
-		mval, sval = np.mean(Q[:maxM,:]), np.std(Q[:maxM,:])
+		mval, sval = np.mean(Q[minM:maxM,:maxT]), np.std(Q[minM:maxM,:maxT])
 		fact_ = 1.5
 		Q[Q > mval + fact_*sval] = mval + fact_*sval
 		Q[Q < mval - fact_*sval] = mval - fact_*sval
+		Q[:minM,:] = mval# - fact_*sval
 	wInner = np.ones(inner)
 	wOuter = np.ones(outer)
-	for i in range(n):
+	for i in range(maxT):
 		Q[:,i] = Q[:,i] - (np.convolve(Q[:,i],wOuter,'same') - np.convolve(Q[:,i],wInner,'same'))/(outer - inner)
 	return Q[:maxM,:]
 
-def slidingWindowH(P,inner=3,outer=32,maxM=50,norm=True):
+def slidingWindowH(P,inner=3,outer=32,maxM=50,minM=7,maxT=59,norm=True):
 	""" Enhance the constrast horizontally (along temporal dimension)
 
 		Cut off extreme values and demean the image
@@ -171,17 +170,23 @@ def slidingWindowH(P,inner=3,outer=32,maxM=50,norm=True):
 	"""
 	Q = P.copy()
 	m, n = Q.shape
-	if outer > n:
-		outer = n
+	if outer > maxT:
+		outer = maxT
+
 	if norm:
-		mval, sval = np.mean(Q[:maxM,:]), np.std(Q[:maxM,:])
+		mval, sval = np.mean(Q[minM:maxM,:maxT]), np.std(Q[minM:maxM,:maxT])
 		fact_ = 1.5
 		Q[Q > mval + fact_*sval] = mval + fact_*sval
 		Q[Q < mval - fact_*sval] = mval - fact_*sval
+		Q[:minM,:] = mval# - fact_*sval
+
 	wInner = np.ones(inner)
 	wOuter = np.ones(outer)
+	if inner > maxT:
+		return Q[:maxM,:]
+		
 	for i in range(maxM):
-		Q[i,:] = Q[i,:] - (np.convolve(Q[i,:],wOuter,'same') - np.convolve(Q[i,:],wInner,'same'))/(outer - inner)
+		Q[i,:maxT] = Q[i,:maxT] - (np.convolve(Q[i,:maxT],wOuter,'same') - np.convolve(Q[i,:maxT],wInner,'same'))/(outer - inner)
 	return Q[:maxM,:]
 
 def timeMetrics(P, b,maxM=50):
@@ -205,9 +210,9 @@ def timeMetrics(P, b,maxM=50):
 	m, n = P.shape
 	cf_ = [np.sum(P[i,:b.size]*b)/np.sum(P[i,:b.size]) for i in range(maxM)]
 	bw_ = [np.sum(P[i,:b.size]*(b - cf_[i])*(b - cf_[i]))/np.sum(P[i,:b.size]) for i in range(maxM)]
-	sk_ = [skew(P[i,:b.size]) for i in range(maxM)]
-	tv_ = [np.sum(np.abs(P[i,1:b.size] - P[i,:b.size-1])) for i in range(maxM)]
-	return cf_ + bw_ + sk_ + tv_
+	#sk_ = [skew(P[i,:b.size]) for i in range(maxM)]
+	#tv_ = [np.sum(np.abs(P[i,1:b.size] - P[i,:b.size-1])) for i in range(maxM)]
+	return cf_ + bw_ #+ sk_ + tv_
 
 def oopsMetrics(P, b,maxM=50):
 	""" Oops metrics

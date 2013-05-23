@@ -14,10 +14,10 @@ reload(fileio)
 reload(metrics)
 def main():
 	###################### WORKING DIRECTORY ########################
-	baseDir = '/home/nick/whale/'
+	baseDir = '/Users/nkridler/Desktop/whale/'
 
 	###################### SET OUTPUT FILE NAME HERE ########################
-	testOutFile = baseDir+'workspace/testMetricsBase.csv'
+	testOutFile = baseDir+'workspace/testMetricsLowFreq2.csv'
 
 	############################## PARAMETERS ###############################
 	dataDir = baseDir+'data2/'			   # Data directory
@@ -27,7 +27,7 @@ def main():
 
 	######################## BUILD A TestData OBJECT #######################
 	#train = fileio.TrainData(dataDir+'train.csv',dataDir+'train/')
-	test = fileio.TestData2(dataDir+'test.csv',dataDir+'test/')
+	test = fileio.TestData2(dataDir+'test2.csv',dataDir+'test2/')
 
 	##################### BUILD A TemplateManager OBJECT ####################
 	tmplFile = baseDir+'moby2/templateReduced.csv'
@@ -51,9 +51,9 @@ def main():
 	for i in range(test.nTest):
 		P, freqs, bins = test.TestSample(i,params=params)
 		out = metrics.computeMetrics(P, tmpl, bins, maxTime)
-		out += metrics.highFreqTemplate(P, bar_)
-		out += metrics.highFreqTemplate(P, bar1_)
-		out += metrics.highFreqTemplate(P, bar2_)
+		#out += metrics.highFreqTemplate(P, bar_)
+		#out += metrics.highFreqTemplate(P, bar1_)
+		#out += metrics.highFreqTemplate(P, bar2_)
 		hL.append(out)			
 	hL = np.array(hL)
 
