@@ -17,7 +17,7 @@ def main():
 	baseDir = '/Users/nkridler/Desktop/whale/'
 
 	###################### SET OUTPUT FILE NAME HERE ########################
-	testOutFile = baseDir+'workspace/testMetricsLowFreq2.csv'
+	testOutFile = baseDir+'workspace/testMetricsLowFreq3.csv'
 
 	############################## PARAMETERS ###############################
 	dataDir = baseDir+'data2/'			   # Data directory

@@ -19,7 +19,7 @@ def main():
 	baseDir = '/Users/nkridler/Desktop/whale/' # Base directory
 
 	###################### SET OUTPUT FILE NAME HERE ########################
-	trainOutFile = baseDir+'workspace/trainMetricsLowerFreq2.csv'
+	trainOutFile = baseDir+'workspace/trainMetricsLowerFreq3.csv'
 
 	
 	############################## PARAMETERS ###############################

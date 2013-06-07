@@ -31,10 +31,10 @@ def buildHeader(tmpl,maxT=60):
 		hdr_ += ['centTime_%04d'%i]
 	for i in range(maxT):
 		hdr_ += ['bwTime_%04d'%i]
-	#for i in range(maxT):
-	#	hdr_ += ['skewTime_%04d'%i]
-	#for i in range(maxT):
-	#	hdr_ += ['tvTime_%04d'%i]
+	for i in range(maxT):
+		hdr_ += ['skewTime_%04d'%i]
+	for i in range(maxT):
+		hdr_ += ['tvTime_%04d'%i]
 
 	# Add time metrics
 	#for i in range(50):
@@ -149,6 +149,7 @@ def slidingWindowV(P,inner=3,outer=64,maxM=50,minM=7,maxT=59,norm=True):
 	wOuter = np.ones(outer)
 	for i in range(maxT):
 		Q[:,i] = Q[:,i] - (np.convolve(Q[:,i],wOuter,'same') - np.convolve(Q[:,i],wInner,'same'))/(outer - inner)
+	Q[Q < 0] = 0.
 	return Q[:maxM,:]
 
 def slidingWindowH(P,inner=3,outer=32,maxM=50,minM=7,maxT=59,norm=True):
@@ -187,6 +188,7 @@ def slidingWindowH(P,inner=3,outer=32,maxM=50,minM=7,maxT=59,norm=True):
 		
 	for i in range(maxM):
 		Q[i,:maxT] = Q[i,:maxT] - (np.convolve(Q[i,:maxT],wOuter,'same') - np.convolve(Q[i,:maxT],wInner,'same'))/(outer - inner)
+	Q[Q < 0] = 0.
 	return Q[:maxM,:]
 
 def timeMetrics(P, b,maxM=50):
@@ -210,9 +212,9 @@ def timeMetrics(P, b,maxM=50):
 	m, n = P.shape
 	cf_ = [np.sum(P[i,:b.size]*b)/np.sum(P[i,:b.size]) for i in range(maxM)]
 	bw_ = [np.sum(P[i,:b.size]*(b - cf_[i])*(b - cf_[i]))/np.sum(P[i,:b.size]) for i in range(maxM)]
-	#sk_ = [skew(P[i,:b.size]) for i in range(maxM)]
-	#tv_ = [np.sum(np.abs(P[i,1:b.size] - P[i,:b.size-1])) for i in range(maxM)]
-	return cf_ + bw_ #+ sk_ + tv_
+	sk_ = [skew(P[i,:b.size]) for i in range(maxM)]
+	tv_ = [np.sum(np.abs(P[i,1:b.size] - P[i,:b.size-1])) for i in range(maxM)]
+	return cf_ + bw_ + sk_ + tv_
 
 def oopsMetrics(P, b,maxM=50):
 	""" Oops metrics
